@@ -1,7 +1,7 @@
 [build]
   base = "aibo---playful-ai-learning"
-  publish = "dist"
-  command = "npm run build"
+  publish = "aibo---playful-ai-learning/dist"
+  command = "npm install && npm run build"
 
 [[redirects]]
   from = "/*"
