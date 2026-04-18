@@ -332,7 +332,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="relative w-full max-w-[430px] h-[844px] bg-white overflow-hidden flex flex-col mx-auto shadow-sm">
+      <div className="relative w-full max-w-[430px] h-[100dvh] bg-white overflow-hidden flex flex-col mx-auto shadow-sm">
         {!authUser && !authLoading && (
           <div className="absolute inset-0 z-[700] bg-gradient-to-br from-aibo-blue-50 via-white to-aibo-red-50 flex items-center justify-center p-6">
             <div className="w-full max-w-sm rounded-3xl bg-white/95 backdrop-blur border border-white shadow-2xl p-8 text-center space-y-6">

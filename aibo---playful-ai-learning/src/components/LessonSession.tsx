@@ -57,9 +57,7 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
   const [maxSessionStreak, setMaxSessionStreak] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
 
-  if (isLoading || adaptiveChallenges.length === 0) {
-    return <div className="h-full bg-white flex items-center justify-center font-display font-bold text-gray-400">Loading lesson...</div>;
-  }
+// MOVED LOADING CHECK
 
   const currentChallenge = adaptiveChallenges[currentIndex];
 
@@ -180,6 +178,9 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
     }
   }, [isChecked, currentIndex, adaptiveChallenges.length, correctCount, onComplete, xpEarned, maxSessionStreak]);
 
+  if (isLoading || adaptiveChallenges.length === 0) {
+    return <div className="h-full bg-white flex items-center justify-center font-display font-bold text-gray-400">Loading lesson...</div>;
+  }
   const renderExercise = () => {
     switch (currentChallenge.type) {
       case 'spot_the_ai':

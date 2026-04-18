@@ -48,7 +48,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && (
+            {true && (
               <div className="p-4 bg-gray-50 rounded-xl text-left overflow-auto max-h-32">
                 <code className="text-xs text-red-500">{this.state.error?.toString()}</code>
               </div>
