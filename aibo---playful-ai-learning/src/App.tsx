@@ -39,7 +39,7 @@ const BADGES: Badge[] = [
 ];
 
 export default function App() {
-  const [authUser, setAuthUser] = useState<UserIcon | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState<'home' | 'leaderboard' | 'quests' | 'profile'>('home');
   const [xp, setXp] = useState(0);

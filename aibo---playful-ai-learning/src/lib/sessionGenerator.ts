@@ -132,11 +132,10 @@ export async function generateAdaptiveSession(
   userId?: string
 ): Promise<Challenge[]> {
   try {
-    const profile = await loadProfileStats({
+    const profile = await loadProfileStats(
       userId,
-      accuracy: performance.accuracy,
-      streak: performance.streak,
-    });
+      { accuracy: performance.accuracy, streak: performance.streak }
+    );
 
     const accuracy = profile.accuracy;
     const streak = profile.streak;
