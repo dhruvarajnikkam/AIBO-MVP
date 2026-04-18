@@ -16,7 +16,7 @@ import MysteryConcept from './exercises/MysteryConcept';
 import StepDebugger from './exercises/StepDebugger';
 import ArgumentBuilder from './exercises/ArgumentBuilder';
 import LinkBuilder from './exercises/LinkBuilder';
-import { generateAdaptiveSession, saveProfileStats, UserPerformance } from '../lib/sessionGenerator';
+import { generateAdaptiveSession, UserPerformance } from '../lib/sessionGenerator';
 import { soundManager } from '../lib/sounds';
 
 // Memoize exercise components to prevent re-renders when parent state (progress, etc) changes
@@ -28,24 +28,22 @@ const MemoizedMatchPairs = memo(MatchPairs);
 interface LessonSessionProps {
   lesson: Lesson;
   performance: UserPerformance;
-  userId?: string;
   onClose: () => void;
   onComplete: (xpEarned: number, accuracy: number, finalStreak: number) => void;
   onStreakRestore?: (amount: number, streak: number) => void;
-  onWrongAnswer?: (amount: number) => void;
+
+  userId?: string;  onWrongAnswer?: (amount: number) => void;
 }
 
-export default function LessonSession({ lesson, performance, userId, onClose, onComplete, onStreakRestore, onWrongAnswer }: LessonSessionProps) {
-  const [adaptiveChallenges, setAdaptiveChallenges] = useState<Challenge[] | null>(null);
-  
+export default function LessonSession({ lesson, performance, onClose, onComplete, onStreakRestore, onWrongAnswer, userId }: LessonSessionProps) {
+  const [adaptiveChallenges, setAdaptiveChallenges] = useState<Challenge[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    let mounted = true;
     generateAdaptiveSession(lesson, performance, userId).then(challenges => {
-      if (mounted) {
-        setAdaptiveChallenges(challenges);
-      }
+      setAdaptiveChallenges(challenges);
+      setIsLoading(false);
     });
-    return () => { mounted = false; };
   }, [lesson, performance, userId]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,19 +56,21 @@ export default function LessonSession({ lesson, performance, userId, onClose, on
   const [sessionStreak, setSessionStreak] = useState(0);
   const [maxSessionStreak, setMaxSessionStreak] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [hearts, setHearts] = useState(5); // 5-strike system
 
-  const currentChallenge = adaptiveChallenges ? adaptiveChallenges[currentIndex] : null;
+  if (isLoading || adaptiveChallenges.length === 0) {
+    return <div className="h-full bg-white flex items-center justify-center font-display font-bold text-gray-400">Loading lesson...</div>;
+  }
+
+  const currentChallenge = adaptiveChallenges[currentIndex];
 
   useEffect(() => {
-    if (!adaptiveChallenges) return;
     setProgress((currentIndex / adaptiveChallenges.length) * 100);
     // Robustly reset state when challenge changes to prevent cross-exercise state leakage
     setSelectedOption(null);
     setIsChecked(false);
     setIsCorrect(false);
     setShowExplanation(false);
-  }, [currentIndex, adaptiveChallenges?.length]);
+  }, [currentIndex, adaptiveChallenges.length]);
 
   const handleCheck = useCallback(() => {
     if (isChecked || !currentChallenge) return;
@@ -154,20 +154,11 @@ export default function LessonSession({ lesson, performance, userId, onClose, on
       
       soundManager.play('correct');
     } else {
-      const newHearts = Math.max(0, hearts - 1);
-      setHearts(newHearts);
       setSessionStreak(0);
       if (onWrongAnswer) onWrongAnswer(5);
       soundManager.play('incorrect');
-
-      void saveProfileStats({
-        userId,
-        accuracy: correctCount / (currentIndex + 1),
-        streak: 0,
-        hearts: newHearts,
-      });
     }
-  }, [isChecked, currentChallenge, selectedOption, sessionStreak, hearts, correctCount, currentIndex, onStreakRestore, onWrongAnswer]);
+  }, [isChecked, currentChallenge, selectedOption, sessionStreak, onStreakRestore, onWrongAnswer]);
 
   const handleSelect = useCallback((option: any) => {
     if (isChecked) return;
@@ -176,31 +167,18 @@ export default function LessonSession({ lesson, performance, userId, onClose, on
   }, [isChecked]);
 
   const handleContinue = useCallback(() => {
-    if (!isChecked || !adaptiveChallenges) return;
+    if (!isChecked) return;
     
     soundManager.play('click');
     if (currentIndex < adaptiveChallenges.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       const finalAccuracy = correctCount / adaptiveChallenges.length;
-      void saveProfileStats({
-        userId,
-        accuracy: finalAccuracy,
-        streak: maxSessionStreak,
-        hearts,
-      });
-      onComplete(xpEarned + 10, finalAccuracy, maxSessionStreak);
+      // Bonus XP for perfect accuracy
+      const accuracyBonus = finalAccuracy === 1 ? 5 : 0;
+      onComplete(lesson.xpReward + accuracyBonus, finalAccuracy, maxSessionStreak);
     }
-  }, [isChecked, currentIndex, adaptiveChallenges?.length, correctCount, xpEarned, maxSessionStreak, hearts, onComplete, adaptiveChallenges]);
-
-  if (!adaptiveChallenges || !currentChallenge) {
-    return (
-      <div className="absolute inset-0 z-[400] bg-white flex items-center justify-center flex-col gap-4">
-        <div className="w-12 h-12 border-4 border-aibo-blue-200 border-t-aibo-blue-500 rounded-full animate-spin"></div>
-        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Loading Session...</p>
-      </div>
-    );
-  }
+  }, [isChecked, currentIndex, adaptiveChallenges.length, correctCount, onComplete, xpEarned, maxSessionStreak]);
 
   const renderExercise = () => {
     switch (currentChallenge.type) {
@@ -484,11 +462,11 @@ export default function LessonSession({ lesson, performance, userId, onClose, on
             disabled={!selectedOption && currentChallenge.type !== 'spot_the_ai'}
             className={`btn-3d w-full py-4 text-xl uppercase tracking-wider ${
               !selectedOption && currentChallenge.type !== 'spot_the_ai'
-                ? 'bg-gray-200 text-gray-400 shadow-[0_4px_0_#D1D5DB] cursor-not-allowed' 
+                ? 'bg-slate-200 text-slate-400 shadow-[0_4px_0_#CBD5E1]' 
                 : isChecked 
                   ? isCorrect 
-                    ? 'bg-duo-green hover:bg-duo-green-dark shadow-[0_4px_0_#58A700]' 
-                    : 'bg-aibo-red-500 hover:bg-aibo-red-400 shadow-[0_4px_0_#8C1A1A]'
+                    ? 'btn-3d-green' 
+                    : 'btn-3d-red'
                   : 'btn-3d-blue'
             }`}
           >

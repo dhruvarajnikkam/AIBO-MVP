@@ -70,6 +70,7 @@ export interface Lesson {
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   challenges: Challenge[];
+  xpReward: number;
   isBonus?: boolean;
   isChest?: boolean;
   isChallenge?: boolean;
@@ -85,8 +86,9 @@ export interface Module {
 export const PRACTICE_LESSON: Lesson = {
   id: 'practice',
   title: 'Daily Practice',
-  description: 'A quick refresher of core AI concepts to earn hearts and keep your learning streak alive.',
+  description: 'A quick refresher of core AI concepts to recharge your battery and keep your learning streak alive.',
   difficulty: 'Easy',
+  xpReward: 20,
   challenges: [
     {
       id: 'p1',
@@ -111,6 +113,7 @@ export const BONUS_LESSON_1: Lesson = {
   description: 'A creative bonus lesson about how AI generates images. Earn extra rewards!',
   difficulty: 'Medium',
   isBonus: true,
+  xpReward: 40,
   challenges: [
     {
       id: 'b1_1',
@@ -132,6 +135,7 @@ export const CHEST_1: Lesson = {
   description: 'Open for a bonus round of rapid-fire questions!',
   difficulty: 'Easy',
   isChest: true,
+  xpReward: 50,
   challenges: [
     {
       id: 'c1_1',
@@ -158,6 +162,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'AI vs Not-AI',
         description: 'Learn to distinguish between traditional software and systems powered by Artificial Intelligence.',
         difficulty: 'Easy',
+        xpReward: 20,
         challenges: [
           {
             id: 'c1',
@@ -416,6 +421,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'AI Ethics & Bias',
         description: 'Understand why AI isn\'t always fair and how we can make it better.',
         difficulty: 'Medium',
+        xpReward: 30,
         challenges: [
           {
             id: 'eth1',
@@ -452,6 +458,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'A quick bonus round!',
         difficulty: 'Easy',
         isChest: true,
+        xpReward: 50,
         challenges: [
           {
             id: 'ch1',
@@ -472,6 +479,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Bonus: How AI makes art!',
         difficulty: 'Medium',
         isBonus: true,
+        xpReward: 40,
         challenges: [
           {
             id: 'cb1',
@@ -492,6 +500,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Test your understanding of AI basics and sensors.',
         difficulty: 'Easy',
         isChallenge: true,
+        xpReward: 60,
         challenges: [
           {
             id: 'q_m1_1',
@@ -520,6 +529,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'How AI Sees',
         description: 'Explore how computers use sensors and data to perceive and interpret the world around them.',
         difficulty: 'Easy',
+        xpReward: 20,
         challenges: [
           {
             id: 'c3',
@@ -726,6 +736,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Bonus: How AI helps explore the stars!',
         difficulty: 'Medium',
         isBonus: true,
+        xpReward: 40,
         challenges: [
           {
             id: 'cb2',
@@ -746,6 +757,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Bonus rewards for vision experts!',
         difficulty: 'Easy',
         isChest: true,
+        xpReward: 50,
         challenges: [
           {
             id: 'ch2',
@@ -766,6 +778,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Test your knowledge of algorithms and data quality.',
         difficulty: 'Easy',
         isChallenge: true,
+        xpReward: 60,
         challenges: [
           {
             id: 'c6',
@@ -932,6 +945,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'AI Concepts',
         description: 'Master the fundamental terminology of AI, from algorithms and datasets to models and predictions.',
         difficulty: 'Medium',
+        xpReward: 30,
         challenges: [
           {
             id: 'c5',
@@ -1104,6 +1118,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'AI Ethics',
         description: 'Explore the ethical considerations and societal impact of Artificial Intelligence.',
         difficulty: 'Medium',
+        xpReward: 40,
         challenges: [
           {
             id: 'sc1',
@@ -1145,6 +1160,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Bonus rewards for ethical thinkers!',
         difficulty: 'Medium',
         isChest: true,
+        xpReward: 50,
         challenges: [
           {
             id: 'ch3',
@@ -1165,6 +1181,7 @@ export const AI_CURRICULUM: Module[] = [
         description: 'Test your knowledge of AI concepts and ethics.',
         difficulty: 'Medium',
         isChallenge: true,
+        xpReward: 60,
         challenges: [
           {
             id: 'q_m3_1',
@@ -1193,6 +1210,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Training Steps',
         description: 'Follow the journey of data as it is collected, cleaned, and used to train a machine learning model.',
         difficulty: 'Medium',
+        xpReward: 35,
         challenges: [
           {
             id: 'c7',
@@ -1395,6 +1413,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Module 3 Quiz',
         description: 'Test your understanding of machine learning and training.',
         difficulty: 'Medium',
+        xpReward: 60,
         challenges: [
           {
             id: 'q_m3_1',
@@ -1416,6 +1435,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Aibo Test',
         description: 'Put your knowledge to the test with Aibo and explore the intersection of AI and robotics.',
         difficulty: 'Hard',
+        xpReward: 40,
         challenges: [
           {
             id: 'c9',
@@ -1603,6 +1623,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Module 4 Quiz',
         description: 'Test your knowledge of smart robots and Aibo.',
         difficulty: 'Medium',
+        xpReward: 60,
         challenges: [
           {
             id: 'q_m4_1',
@@ -1624,6 +1645,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Tuning AI',
         description: 'Learn how developers fine-tune AI models to balance accuracy, safety, and performance.',
         difficulty: 'Medium',
+        xpReward: 30,
         challenges: [
           {
             id: 'c11',
@@ -1789,6 +1811,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Module 5 Quiz',
         description: 'Test your knowledge of AI tuning and error types.',
         difficulty: 'Medium',
+        xpReward: 60,
         challenges: [
           {
             id: 'q_m5_1',
@@ -1810,6 +1833,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'The Ultimate AI Challenge',
         description: 'The final challenge: dive deep into neural networks, ethics, and the future of intelligent systems.',
         difficulty: 'Hard',
+        xpReward: 50,
         challenges: [
           {
             id: 'sc1',
@@ -1980,6 +2004,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Module 6 Quiz',
         description: 'The final master quiz covering advanced AI concepts.',
         difficulty: 'Hard',
+        xpReward: 100,
         challenges: [
           {
             id: 'q_m6_1',
@@ -2008,6 +2033,7 @@ export const AI_CURRICULUM: Module[] = [
         title: 'Master Quiz',
         description: 'The ultimate test of your AI knowledge. Complete this to earn your AI Master badge!',
         difficulty: 'Hard',
+        xpReward: 150,
         challenges: [
           {
             id: 'q1',

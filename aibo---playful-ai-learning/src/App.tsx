@@ -1,15 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Star, Award, Home, BarChart2, User as UserIcon, CheckCircle2, Target, LogIn } from 'lucide-react';
+import { Trophy, Star, Award, Home, BarChart2, User as UserIcon, CheckCircle2, Target } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import { isSupabaseConfigured, supabase } from './lib/supabase';
+import type { User } from '@supabase/supabase-js';
 import Header from './components/Header';
 import LearningPath from './components/LearningPath';
 import LessonSession from './components/LessonSession';
+import Leaderboard from './components/Leaderboard';
 import ErrorBoundary from './components/ErrorBoundary';
+import ChestIcon from './components/ui/ChestIcon';
+import QuestsView from './components/QuestsView';
 import { AI_CURRICULUM, Lesson, PRACTICE_LESSON } from './lib/content';
 import { UserPerformance } from './lib/sessionGenerator';
 import { soundManager } from './lib/sounds';
-import { isSupabaseConfigured, supabase } from './lib/supabase';
-import type { User } from '@supabase/supabase-js';
 
 const MAX_CHARGING = 100;
 const CHARGING_REGEN_TIME = 60 * 60 * 1000; // 1 hour for 10 units
@@ -35,25 +39,23 @@ const BADGES: Badge[] = [
 ];
 
 export default function App() {
-  const [view, setView] = useState<'home' | 'leaderboard' | 'quests' | 'profile'>('home');
-  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authUser, setAuthUser] = useState<UserIcon | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [view, setView] = useState<'home' | 'leaderboard' | 'quests' | 'profile'>('home');
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(0);
   const [charging, setCharging] = useState(100);
   const [lastChargingRefill, setLastChargingRefill] = useState<number>(Date.now());
   const [accuracy, setAccuracy] = useState(1.0); // Default to 100%
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [bookmarkedLessons, setBookmarkedLessons] = useState<string[]>([]);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastXpEarned, setLastXpEarned] = useState(0);
   const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
+  const [bestAnswerStreak, setBestAnswerStreak] = useState(0);
+  const [dailyChestClaimed, setDailyChestClaimed] = useState(false);
   const [chargingAnimation, setChargingAnimation] = useState<{ text: string; id: number } | null>(null);
-  const [quests, setQuests] = useState([
-    { id: 'q1', title: 'AI Novice', description: 'Complete 2 lessons', target: 2, current: 0, rewardXp: 50, isCompleted: false },
-    { id: 'q2', title: 'Streak Master', description: 'Get a 5-answer streak', target: 5, current: 0, rewardXp: 30, isCompleted: false },
-    { id: 'q3', title: 'XP Hunter', description: 'Earn 100 XP', target: 100, current: 0, rewardXp: 40, isCompleted: false }
-  ]);
 
   useEffect(() => {
     let mounted = true;
@@ -138,12 +140,20 @@ export default function App() {
     ? Math.max(0, CHARGING_REGEN_TIME - (Date.now() - lastChargingRefill))
     : null;
 
+  const handleToggleBookmark = (lessonId: string) => {
+    setBookmarkedLessons(prev => 
+      prev.includes(lessonId) 
+        ? prev.filter(id => id !== lessonId) 
+        : [...prev, lessonId]
+    );
+    soundManager.play('click');
+  };
+
   const handleLessonSelect = (lessonId: string) => {
     if (!authUser) {
       alert('Please sign in first.');
       return;
     }
-
     soundManager.play('click');
     if (lessonId === 'practice') {
       setActiveLesson(PRACTICE_LESSON);
@@ -200,6 +210,7 @@ export default function App() {
       setLastXpEarned(earnedXp);
       setStreak(prev => prev + 1);
       setAccuracy(prev => (prev + sessionAccuracy) / 2); // Simple moving average
+      setBestAnswerStreak(prev => Math.max(prev, finalStreak));
       setActiveLesson(null);
       setShowCelebration(true);
       soundManager.play('complete');
@@ -211,23 +222,6 @@ export default function App() {
       if (newCompleted.includes('l_quiz') && !earnedBadges.includes('b5')) {
         setEarnedBadges(prev => [...prev, 'b5']);
       }
-
-      // Update Quests
-      setQuests(prev => prev.map(q => {
-        if (q.isCompleted) return q;
-        let newCurrent = q.current;
-        if (q.id === 'q1') newCurrent += 1;
-        if (q.id === 'q2') newCurrent = Math.max(newCurrent, finalStreak);
-        if (q.id === 'q3') newCurrent += earnedXp;
-
-        const isNowCompleted = newCurrent >= q.target;
-        if (isNowCompleted && !q.isCompleted) {
-          setXp(v => v + q.rewardXp);
-          soundManager.play('complete');
-        }
-
-        return { ...q, current: newCurrent, isCompleted: isNowCompleted };
-      }));
     }
   };
 
@@ -235,66 +229,63 @@ export default function App() {
     switch (view) {
       case 'home':
         return (
-          <div className="flex flex-col h-full">
+          <motion.div 
+            key="home-view"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="flex flex-col h-full"
+          >
             <div className="flex-1 overflow-y-auto scrollbar-hide">
               <LearningPath 
                 modules={AI_CURRICULUM} 
                 onLessonSelect={handleLessonSelect}
                 completedLessons={completedLessons}
+                bookmarkedLessons={bookmarkedLessons}
+                onToggleBookmark={handleToggleBookmark}
                 currentLessonId={AI_CURRICULUM[0].lessons.find(l => !completedLessons.includes(l.id))?.id}
                 charging={charging}
               />
             </div>
-          </div>
+          </motion.div>
+        );
+      case 'leaderboard':
+        return (
+          <motion.div 
+            key="leaderboard-view"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="h-full"
+          >
+            <Leaderboard currentUserXp={xp} />
+          </motion.div>
         );
       case 'quests':
         return (
-          <div className="pt-8 px-6 pb-8 space-y-8 max-w-md mx-auto h-full overflow-y-auto scrollbar-hide">
-            <div className="text-center space-y-2">
-              <h2 className="text-3xl font-display font-black text-gray-700">Daily Quests</h2>
-              <p className="text-gray-400 font-medium">Complete these tasks to earn extra XP!</p>
-            </div>
-
-            <div className="space-y-4">
-              {quests.map(quest => (
-                <div key={quest.id} className={`card-3d p-6 flex flex-col gap-4 transition-all ${quest.isCompleted ? 'bg-duo-green/5 border-duo-green/20' : 'bg-white'}`}>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${quest.isCompleted ? 'bg-duo-green text-white' : 'bg-aibo-blue-100 text-aibo-blue-500'}`}>
-                        {quest.isCompleted ? <CheckCircle2 size={24} /> : <Target size={24} />}
-                      </div>
-                      <div>
-                        <h4 className="font-display font-black text-lg text-gray-700 leading-tight">{quest.title}</h4>
-                        <p className="text-xs text-gray-400 font-medium">{quest.description}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-aibo-blue-400 uppercase tracking-wider">Reward</p>
-                      <p className="text-lg font-display font-black text-aibo-blue-500">+{quest.rewardXp} XP</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}
-                        className={`h-full transition-all duration-1000 ${quest.isCompleted ? 'bg-duo-green' : 'bg-aibo-blue-500'}`}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-bold text-gray-400">{quest.current} / {quest.target}</p>
-                      {quest.isCompleted && <span className="text-[10px] font-black text-duo-green uppercase tracking-widest">Completed!</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <QuestsView 
+            xp={xp}
+            streak={streak}
+            completedCount={completedLessons.length}
+            accuracy={accuracy}
+            bestAnswerStreak={bestAnswerStreak}
+            dailyChestClaimed={dailyChestClaimed}
+            onClaimXp={(amount) => {
+              setXp(prev => prev + amount);
+              setDailyChestClaimed(true);
+              soundManager.play('complete');
+            }}
+          />
         );
       case 'profile':
         return (
-          <div className="pt-8 px-6 pb-8 space-y-8 max-w-md mx-auto">
+          <motion.div 
+            key="profile-view"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="pt-8 px-6 pb-24 space-y-8 max-w-md mx-auto overflow-y-auto scrollbar-hide"
+          >
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="w-24 h-24 bg-aibo-blue-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                 <UserIcon className="w-12 h-12 text-aibo-blue-500" />
@@ -332,7 +323,7 @@ export default function App() {
                 })}
               </div>
             </div>
-          </div>
+          </motion.div>
         );
       default:
         return <div className="pt-24 text-center text-gray-400 font-display font-bold">Coming Soon!</div>;
@@ -373,11 +364,12 @@ export default function App() {
             </div>
           </div>
         )}
-
         <Header xp={xp} streak={streak} charging={charging} nextChargingIn={nextChargingIn} />
 
-        <main className="flex-1 overflow-hidden">
-          {renderView()}
+        <main className="flex-1 overflow-hidden relative">
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
         </main>
 
         {/* Lesson Session Overlay */}
@@ -496,12 +488,21 @@ export default function App() {
               setView('quests');
               soundManager.play('click');
             }}
-            className={`flex flex-col items-center gap-1 transition-colors ${view === 'quests' ? 'text-aibo-blue-500' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition-colors relative ${view === 'quests' ? 'text-aibo-blue-500' : 'text-gray-400'}`}
           >
             <div className={`w-12 h-10 rounded-xl flex items-center justify-center transition-colors ${view === 'quests' ? 'bg-aibo-blue-50' : ''}`}>
               <Target className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-tighter">Quests</span>
+            
+            {/* Notification Badge */}
+            {!dailyChestClaimed && view !== 'quests' && (
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-0 right-1 w-2.5 h-2.5 bg-pink-500 border-2 border-white rounded-full shadow-sm"
+              />
+            )}
           </button>
           <button 
             onClick={() => {

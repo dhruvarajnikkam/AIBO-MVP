@@ -71,7 +71,7 @@ export default function DragAndDrop({ buckets, items, isChecked, onSelect }: Dra
       const bucketEl = bucketRefs.current[bucketId];
       if (bucketEl) {
         const rect = bucketEl.getBoundingClientRect();
-        const INSET = 5; // Reduced inset for better sensitivity
+        const INSET = 5; 
         if (
           x >= rect.left + INSET &&
           x <= rect.right - INSET &&
@@ -103,32 +103,46 @@ export default function DragAndDrop({ buckets, items, isChecked, onSelect }: Dra
     }
   }, [assignments, isChecked, onSelect]);
 
-  const removeItem = useCallback((itemId: string) => {
+  const toggleAssign = useCallback((itemId: string) => {
     if (isChecked) return;
-    const newAssignments = { ...assignments };
-    delete newAssignments[itemId];
-    setAssignments(newAssignments);
-    onSelect(newAssignments);
-    soundManager.play('click');
-  }, [assignments, isChecked, onSelect]);
+    
+    if (assignments[itemId]) {
+      // Unassign
+      const newAssignments = { ...assignments };
+      delete newAssignments[itemId];
+      setAssignments(newAssignments);
+      onSelect(newAssignments);
+      soundManager.play('click');
+    } else {
+      // Assign to the first available bucket (or the first one if only one)
+      const firstBucketId = buckets[0].id;
+      const newAssignments = { ...assignments, [itemId]: firstBucketId };
+      setAssignments(newAssignments);
+      onSelect(newAssignments);
+      soundManager.play('click');
+    }
+  }, [assignments, isChecked, onSelect, buckets]);
 
   return (
-    <div className="space-y-8" ref={containerRef}>
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-10" ref={containerRef}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {buckets.map((bucket) => (
           <div 
             key={bucket.id} 
             ref={el => { bucketRefs.current[bucket.id] = el; }}
-            className={`border-4 border-dashed rounded-3xl p-4 min-h-[180px] flex flex-col gap-3 transition-all duration-300 ${
+            className={`relative rounded-[2rem] p-6 min-h-[160px] flex flex-col gap-4 transition-all duration-300 ${
               isChecked 
-                ? 'bg-white border-gray-100' 
-                : 'bg-slate-50 border-slate-200 hover:border-aibo-blue-300 hover:bg-aibo-blue-50/30'
+                ? 'bg-slate-50 border-2 border-slate-100 shadow-none' 
+                : 'bg-white border-2 border-slate-200 shadow-[0_4px_0_#e2e8f0]'
             }`}
           >
-            <h4 className="font-display font-black text-center text-slate-400 uppercase text-[10px] tracking-widest mb-2">
-              {bucket.label}
-            </h4>
-            <div className="flex flex-wrap gap-2 justify-center flex-1">
+            <div className="absolute -top-3 left-6 px-3 py-1 bg-white border-2 border-slate-200 rounded-full">
+              <h4 className="font-display font-black text-slate-400 uppercase text-[10px] tracking-widest leading-none">
+                {bucket.label}
+              </h4>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 justify-start items-start flex-1 pt-2">
               <AnimatePresence mode="popLayout">
                 {items.filter(item => assignments[item.id] === bucket.id).map(item => (
                   <DraggableItem
@@ -138,23 +152,30 @@ export default function DragAndDrop({ buckets, items, isChecked, onSelect }: Dra
                     isAssigned={true}
                     bucketId={bucket.id}
                     onDragEnd={handleDragEnd}
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => toggleAssign(item.id)}
                     containerRef={containerRef}
                   />
                 ))}
               </AnimatePresence>
+              
+              {/* Empty placeholder if no items */}
+              {items.filter(item => assignments[item.id] === bucket.id).length === 0 && !isChecked && (
+                <div className="w-full h-full min-h-[80px] flex items-center justify-center border-2 border-dashed border-slate-100 rounded-2xl">
+                   <p className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic">Drop here</p>
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="relative p-6 bg-white rounded-3xl border-2 border-slate-100 shadow-inner min-h-[120px] flex flex-wrap gap-3 justify-center items-center">
+      <div className="relative p-8 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 min-h-[140px] flex flex-wrap gap-4 justify-center items-center">
         {items.map(item => {
           const isAssigned = !!assignments[item.id];
           return (
-            <div key={`pool-slot-${item.id}`} className="relative">
+            <div key={`pool-slot-${item.id}`} className="relative group">
               {/* Fixed Position Placeholder */}
-              <div className="px-6 py-3 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-100 text-transparent select-none font-display font-black text-sm">
+              <div className="px-6 py-3 rounded-2xl bg-slate-200/30 text-transparent select-none font-display font-black text-sm border-2 border-dashed border-slate-200">
                 {item.text}
               </div>
 
@@ -166,6 +187,7 @@ export default function DragAndDrop({ buckets, items, isChecked, onSelect }: Dra
                       isChecked={isChecked}
                       isAssigned={false}
                       onDragEnd={handleDragEnd}
+                      onClick={() => toggleAssign(item.id)}
                       containerRef={containerRef}
                     />
                   </div>
@@ -176,12 +198,13 @@ export default function DragAndDrop({ buckets, items, isChecked, onSelect }: Dra
         })}
       </div>
       
-      <div className="flex items-center justify-center gap-2 text-slate-400">
-        <div className="w-8 h-0.5 bg-slate-100" />
-        <p className="text-[10px] font-black uppercase tracking-widest">
-          Drag items to categories
+      <div className="flex items-center justify-center gap-4 text-slate-300">
+        <div className="flex-1 h-px bg-slate-100" />
+        <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-aibo-blue-400 animate-pulse" />
+          Drag or Tap to assign
         </p>
-        <div className="w-8 h-0.5 bg-slate-100" />
+        <div className="flex-1 h-px bg-slate-100" />
       </div>
     </div>
   );

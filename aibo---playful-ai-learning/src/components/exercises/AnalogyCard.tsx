@@ -45,15 +45,15 @@ export default function AnalogyCard({
           const isThisSelected = option === selectedOption;
           const isThisCorrect = option === correctAnswer;
 
-          let stateClasses = 'hover:bg-gray-50';
+          let stateClasses = 'bg-white hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_#e2e8f0]';
           if (isThisSelected) stateClasses = 'card-3d-selected';
           if (isChecked) {
             if (isThisCorrect) {
-              stateClasses = 'border-duo-green bg-green-50 shadow-[0_4px_0_#58A700]';
+              stateClasses = 'bg-duo-green text-white border-duo-green shadow-[0_4px_0_#46a302]';
             } else if (isThisSelected && !isCorrect) {
-              stateClasses = 'border-aibo-red-500 bg-red-50 shadow-[0_4px_0_#8C1A1A] opacity-50';
+              stateClasses = 'bg-aibo-red-500 text-white border-aibo-red-500 shadow-[0_4px_0_#d32f2f] opacity-80';
             } else {
-              stateClasses = 'opacity-30';
+              stateClasses = 'opacity-30 border-slate-100 shadow-none';
             }
           }
 

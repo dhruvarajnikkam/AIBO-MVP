@@ -33,19 +33,19 @@ export default function SortSequence({ steps, correctOrder, isChecked, onSelect 
               key={item.id} 
               value={item}
               dragListener={!isChecked}
-              className={`flex items-center gap-4 p-4 bg-white border-2 rounded-2xl shadow-sm transition-colors ${
+              className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${
                 isChecked 
                   ? isCorrectPos 
-                    ? 'border-duo-green bg-green-50' 
-                    : 'border-aibo-red-500 bg-red-50'
-                  : 'border-gray-200 cursor-grab active:cursor-grabbing'
+                    ? 'bg-duo-green text-white shadow-[0_4px_0_#58A700]' 
+                    : 'bg-aibo-red-500 text-white shadow-[0_4px_0_#8C1A1A]'
+                  : 'bg-white border-2 border-slate-200 shadow-[0_4px_0_#e2e8f0] cursor-grab active:cursor-grabbing active:translate-y-0.5 active:shadow-[0_2px_0_#e2e8f0]'
               }`}
             >
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 font-display font-black text-gray-400 text-sm">
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-display font-black text-sm ${isChecked ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'}`}>
                 {index + 1}
               </div>
-              <p className="flex-1 font-display font-bold text-gray-700">{item.text}</p>
-              {!isChecked && <GripVertical className="w-5 h-5 text-gray-300" />}
+              <p className={`flex-1 font-display font-bold ${isChecked ? 'text-white' : 'text-slate-700'}`}>{item.text}</p>
+              {!isChecked && <GripVertical className="w-5 h-5 text-slate-300" />}
             </Reorder.Item>
           );
         })}

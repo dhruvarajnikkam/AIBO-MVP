@@ -45,16 +45,16 @@ export default function FillInBlank({
           const isThisCorrect = option === correctAnswer;
 
           let stateClasses = isThisSelected 
-            ? 'bg-aibo-blue-500 text-white shadow-[0_4px_0_#0077B6]' 
-            : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 shadow-[0_4px_0_#E5E7EB]';
+            ? 'bg-aibo-blue-500 text-white shadow-[0_4px_0_#1e88e5]' 
+            : 'bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_#e2e8f0]';
 
           if (isChecked) {
             if (isThisCorrect) {
-              stateClasses = 'bg-green-500 text-white border-green-600 shadow-[0_4px_0_#58A700]';
+              stateClasses = 'bg-duo-green text-white border-duo-green shadow-[0_4px_0_#46a302]';
             } else if (isThisSelected && !isCorrect) {
-              stateClasses = 'bg-aibo-red-500 text-white border-aibo-red-600 shadow-[0_4px_0_#8C1A1A] opacity-50';
+              stateClasses = 'bg-aibo-red-500 text-white border-aibo-red-500 shadow-[0_4px_0_#d32f2f] opacity-80';
             } else {
-              stateClasses = 'opacity-30 bg-white border-2 border-gray-200 text-gray-700';
+              stateClasses = 'opacity-30 bg-white border-2 border-slate-100 text-slate-400 shadow-none';
             }
           }
 

@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, Check, Lock, Filter, X, Gift, Trophy, Sparkles } from 'lucide-react';
+import { Star, Check, Lock, Filter, X, Gift, Trophy, Sparkles, Zap, Award, Bookmark } from 'lucide-react';
+import ChestIcon from './ui/ChestIcon';
 import { Module, Lesson } from '../lib/content';
 import { soundManager } from '../lib/sounds';
 
@@ -8,14 +9,24 @@ interface LearningPathProps {
   modules: Module[];
   onLessonSelect: (lessonId: string) => void;
   completedLessons: string[];
+  bookmarkedLessons: string[];
+  onToggleBookmark: (lessonId: string) => void;
   currentLessonId?: string;
   charging: number;
 }
 
-type Difficulty = 'Easy' | 'Medium' | 'Hard';
+type FilterType = 'All' | 'Easy' | 'Medium' | 'Hard' | 'Bookmarks';
 
-export default function LearningPath({ modules, onLessonSelect, completedLessons, currentLessonId, charging }: LearningPathProps) {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | 'All'>('All');
+export default function LearningPath({ 
+  modules, 
+  onLessonSelect, 
+  completedLessons, 
+  bookmarkedLessons,
+  onToggleBookmark,
+  currentLessonId, 
+  charging 
+}: LearningPathProps) {
+  const [selectedDifficulty, setSelectedDifficulty] = useState<FilterType>('All');
   const [activeLesson, setActiveLesson] = useState<{ lesson: Lesson; moduleIdx: number; lessonIdx: number } | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -25,10 +36,14 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
     return modules
       .map(module => ({
         ...module,
-        lessons: module.lessons.filter(lesson => lesson.difficulty === selectedDifficulty)
+        lessons: module.lessons.filter(lesson => 
+          selectedDifficulty === 'Bookmarks' 
+            ? bookmarkedLessons.includes(lesson.id)
+            : lesson.difficulty === selectedDifficulty
+        )
       }))
-      .filter(module => module.lessons.length > 0 || module.difficulty === selectedDifficulty);
-  }, [modules, selectedDifficulty]);
+      .filter(module => module.lessons.length > 0);
+  }, [modules, selectedDifficulty, bookmarkedLessons]);
 
   // Create a flat list of all lessons to determine global locking
   const allLessons = useMemo(() => {
@@ -52,57 +67,89 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
   }, [activeLesson]);
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4 pb-4 overflow-y-auto scrollbar-hide h-full relative">
-      {/* Practice Card */}
-      {charging < 50 && (
-        <div className="w-full max-w-md px-4">
-          <button 
-            onClick={() => onLessonSelect('practice')}
-            className="w-full bg-duo-green text-white p-4 rounded-3xl shadow-[0_4px_0_#58A700] flex items-center gap-4 hover:brightness-105 transition-all"
+    <div className="flex flex-col items-center gap-6 pb-20 overflow-y-auto scrollbar-hide h-full relative">
+      {/* Sticky Header with Filter */}
+      <div className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-4 flex flex-col gap-3">
+        {/* Practice Card (Compact when scrolled?) */}
+        {charging < 50 && (
+          <motion.div 
+            initial={{ height: 'auto', opacity: 1 }}
+            className="w-full max-w-md mx-auto"
           >
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white fill-white" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-display font-black text-lg leading-tight">Recharge Battery</h3>
-              <p className="text-xs font-medium opacity-90">Practice to gain 20% charge!</p>
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* Difficulty Selector */}
-      <div className="w-full max-w-md px-4 mb-2">
-        <div className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-2 flex gap-1 items-center">
-          {(['All', 'Easy', 'Medium', 'Hard'] as const).map((diff) => (
-            <motion.button
-              key={diff}
-              onClick={() => {
-                setSelectedDifficulty(diff);
-                soundManager.play('click');
-                setActiveLesson(null);
-              }}
-              animate={{ 
-                scale: selectedDifficulty === diff ? 1.05 : 1,
-                zIndex: selectedDifficulty === diff ? 10 : 1
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className={`flex-1 py-2 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all duration-200 ${
-                selectedDifficulty === diff
-                  ? 'bg-white text-aibo-blue-500 shadow-md border-2 border-aibo-blue-200 ring-4 ring-aibo-blue-500/5'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
+            <button 
+              onClick={() => onLessonSelect('practice')}
+              className="w-full bg-duo-green text-white p-3 rounded-2xl shadow-[0_4px_0_#58A700] flex items-center gap-3 hover:brightness-105 transition-all text-sm"
             >
-              {diff}
-            </motion.button>
-          ))}
+              <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-white fill-white" />
+              </div>
+              <div className="text-left flex-1">
+                <h3 className="font-display font-black leading-tight">Recharge Battery</h3>
+                <p className="text-[10px] font-medium opacity-90 italic">Practice to gain 20% charge!</p>
+              </div>
+            </button>
+          </motion.div>
+        )}
+
+        <div className="w-full max-w-md mx-auto">
+          <div className="flex items-center gap-3 bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
+            <div className="pl-3 py-2 text-gray-400">
+              <Filter size={14} className="opacity-50" />
+            </div>
+            {(['All', 'Easy', 'Medium', 'Hard', 'Bookmarks'] as const).map((diff) => {
+              const bgColors = {
+                All: 'bg-aibo-blue-500 text-white',
+                Easy: 'bg-duo-green text-white',
+                Medium: 'bg-yellow-500 text-white',
+                Hard: 'bg-red-500 text-white',
+                Bookmarks: 'bg-pink-500 text-white'
+              };
+              
+              const isActive = selectedDifficulty === diff;
+
+              return (
+                <motion.button
+                  key={diff}
+                  onClick={() => {
+                    setSelectedDifficulty(diff);
+                    soundManager.play('click');
+                    setActiveLesson(null);
+                  }}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex-1 py-1.5 rounded-xl font-display font-black text-[10px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1 ${
+                    isActive
+                      ? `${bgColors[diff]} shadow-lg shadow-black/10`
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {diff === 'Bookmarks' && <Bookmark size={10} className={isActive ? 'fill-current' : ''} />}
+                  {diff}
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {filteredModules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-          <Filter className="w-12 h-12 mb-4 opacity-20" />
-          <p className="font-display font-bold">No lessons found for this level</p>
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <div className="relative mb-6">
+            <Filter className="w-16 h-16 opacity-10" />
+            <X className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-300" />
+          </div>
+          <p className="font-display font-black text-lg text-gray-500">
+            {selectedDifficulty === 'Bookmarks' ? "No bookmarked lessons yet" : `No ${selectedDifficulty.toLowerCase()} lessons here`}
+          </p>
+          <p className="text-xs font-medium mt-1">
+            {selectedDifficulty === 'Bookmarks' ? "Bookmark lessons to find them later" : "Try switching back to 'All'"}
+          </p>
+          <button 
+            onClick={() => setSelectedDifficulty('All')}
+            className="mt-6 px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-display font-black text-xs uppercase tracking-widest transition-colors"
+          >
+            Clear Filter
+          </button>
         </div>
       ) : (
         filteredModules.map((module, mIdx) => {
@@ -112,27 +159,42 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
           const isModuleLocked = globalIdx > 0 && !completedLessons.includes(allLessons[globalIdx - 1].id);
 
           return (
-            <div key={module.id} className={`w-full max-w-md px-4 transition-opacity duration-500 ${isModuleLocked ? 'opacity-60 grayscale-[0.5]' : 'opacity-100'}`}>
+            <div key={module.id} className={`w-full max-w-md px-4 transition-all duration-500 ${isModuleLocked ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
               {/* Module Header */}
-              <div className={`${isModuleLocked ? 'bg-gray-400' : 'bg-aibo-blue-500'} text-white p-6 rounded-3xl mb-8 shadow-lg relative overflow-hidden transition-colors duration-500`}>
+              <div className={`${isModuleLocked ? 'bg-slate-300 border-slate-400' : 'bg-aibo-blue-500 border-aibo-blue-700'} text-white p-6 rounded-[2rem] mb-12 shadow-lg relative overflow-hidden transition-all duration-500 border-b-4`}>
                 <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-sm font-display font-black uppercase tracking-widest opacity-80">
-                      Module {mIdx + 1}
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className={`text-xs font-display font-black uppercase tracking-[0.2em] ${isModuleLocked ? 'text-slate-500' : 'text-white/80'}`}>
+                      Section {mIdx + 1}
                     </h3>
                     <div className="flex items-center gap-2">
-                      {isModuleLocked && <Lock size={12} className="text-white/80" />}
-                      <span className="text-[10px] font-black uppercase tracking-tighter bg-white/20 px-2 py-0.5 rounded-full">
-                        {module.difficulty}
-                      </span>
+                      {isModuleLocked ? (
+                        <div className="bg-slate-500/10 px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm border border-slate-500/10">
+                          <Lock size={10} className="text-slate-500" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Locked</span>
+                        </div>
+                      ) : (
+                        <div className="bg-white/20 px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm border border-white/10">
+                          <Award size={10} className="text-white" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">
+                            {module.difficulty}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <h2 className="text-2xl font-display font-black leading-tight">
+                  <h2 className={`text-2xl font-display font-black leading-tight ${isModuleLocked ? 'text-slate-500' : 'text-white'}`}>
                     {module.title}
                   </h2>
                 </div>
                 {/* Decorative background element */}
-                {!isModuleLocked && <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />}
+                {!isModuleLocked && (
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    className="absolute -right-4 -bottom-4 w-32 h-32 bg-white rounded-full blur-2xl" 
+                  />
+                )}
               </div>
 
               {/* Lessons Zigzag */}
@@ -162,42 +224,42 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
                               soundManager.play('click');
                             }
                           }}
-                          className={`relative w-20 h-20 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
-                            isCompleted 
-                              ? lesson.isChallenge ? 'bg-yellow-500 shadow-[0_6px_0_#CA8A04]' : 'bg-aibo-blue-500 shadow-[0_6px_0_#0077B6]' 
-                              : isLocked 
-                                ? 'bg-gray-200 shadow-[0_6px_0_#D1D5DB]' 
-                                : lesson.isBonus 
-                                  ? 'bg-purple-100 border-4 border-purple-500 shadow-[0_6px_0_#7E22CE]'
-                                  : lesson.isChest
-                                    ? 'bg-yellow-100 border-4 border-yellow-500 shadow-[0_6px_0_#CA8A04]'
-                                    : 'bg-white border-4 border-aibo-blue-500 shadow-[0_6px_0_#0077B6]'
+                          className={`relative w-20 h-20 flex items-center justify-center shrink-0 transition-all duration-300 ${
+                            lesson.isChest
+                              ? isLocked
+                                ? 'bg-slate-200 rounded-2xl shadow-[0_6px_0_#94a3b8] grayscale cursor-not-allowed'
+                                : 'bg-white rounded-2xl shadow-[0_6px_0_#e2e8f0]'
+                              : isCompleted 
+                                ? lesson.isChallenge ? 'bg-yellow-500 rounded-full shadow-[0_6px_0_#CA8A04]' : 'bg-aibo-blue-500 rounded-full shadow-[0_6px_0_#0077B6]' 
+                                : isLocked 
+                                  ? 'bg-slate-200 rounded-full shadow-[0_6px_0_#94a3b8] grayscale cursor-not-allowed' 
+                                  : lesson.isBonus 
+                                    ? 'bg-purple-100 rounded-full border-4 border-purple-500 shadow-[0_6px_0_#7E22CE]'
+                                    : 'bg-white rounded-full border-4 border-aibo-blue-500 shadow-[0_6px_0_#0077B6]'
                           }`}
                         >
-                          {isCompleted ? (
+                          {/* Bookmark Indicator */}
+                          {bookmarkedLessons.includes(lesson.id) && (
+                            <motion.div 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-1 z-20 w-8 h-8 bg-pink-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg"
+                            >
+                              <Bookmark size={14} className="text-white fill-current" />
+                            </motion.div>
+                          )}
+
+                          {lesson.isChest ? (
+                            <ChestIcon 
+                              isLocked={isLocked}
+                              isCurrent={isCurrent}
+                              isOpen={isCompleted}
+                              className="w-14 h-14"
+                            />
+                          ) : isCompleted ? (
                             <Check className="w-10 h-10 text-white stroke-[4px]" />
                           ) : isLocked ? (
                             <Lock className="w-8 h-8 text-gray-400" />
-                          ) : lesson.isChest ? (
-                            <div className="relative w-12 h-12">
-                              {/* Chest Base */}
-                              <div className="absolute bottom-1 left-1 right-1 h-6 bg-yellow-700 rounded-b-md border-2 border-yellow-900 shadow-inner" />
-                              {/* Chest Lid */}
-                              <div className="absolute top-1 left-0 right-0 h-6 bg-yellow-600 rounded-t-xl border-2 border-yellow-900 flex items-center justify-center">
-                                <div className="w-2 h-2 bg-yellow-400 rounded-full border border-yellow-900" />
-                              </div>
-                              {/* Straps */}
-                              <div className="absolute top-1 bottom-1 left-3 w-1.5 bg-yellow-900/30" />
-                              <div className="absolute top-1 bottom-1 right-3 w-1.5 bg-yellow-900/30" />
-                              
-                              {isCurrent && (
-                                <motion.div 
-                                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                                  transition={{ repeat: Infinity, duration: 2 }}
-                                  className="absolute inset-0 bg-yellow-400/30 rounded-full blur-xl -z-10"
-                                />
-                              )}
-                            </div>
                           ) : lesson.isChallenge ? (
                             <Trophy className="w-10 h-10 text-yellow-600" />
                           ) : lesson.isBonus ? (
@@ -222,14 +284,22 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
                           )}
                         </motion.button>
 
-                        <div className={`flex flex-col ${lIdx % 2 === 0 ? 'text-left' : 'text-right'} max-w-[180px]`}>
-                          <h4 className={`font-display font-black text-sm uppercase tracking-tight ${isLocked ? 'text-gray-400' : 'text-gray-700'}`}>
-                            {lesson.title}
-                          </h4>
-                          <p className={`text-[10px] font-medium leading-tight mt-1 ${isLocked ? 'text-gray-300' : 'text-gray-500'}`}>
-                            {lesson.description}
-                          </p>
-                        </div>
+                          <div className={`flex flex-col ${lIdx % 2 === 0 ? 'text-left' : 'text-right'} max-w-[180px]`}>
+                            <h4 className={`font-display font-black text-sm uppercase tracking-tight ${isLocked ? 'text-gray-400' : 'text-gray-700'}`}>
+                              {lesson.title}
+                            </h4>
+                            <div className={`flex items-center gap-1 mt-1 ${lIdx % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                              <div className={`px-2 py-0.5 rounded-full flex items-center gap-1 ${isLocked ? 'bg-gray-100' : 'bg-pink-100 shadow-sm border border-pink-200'}`}>
+                                <Star size={10} className={`${isLocked ? 'text-gray-300' : 'text-pink-500 fill-pink-500'}`} />
+                                <span className={`text-[10px] font-black leading-none ${isLocked ? 'text-gray-300' : 'text-pink-600'}`}>
+                                  +{lesson.xpReward} XP
+                                </span>
+                              </div>
+                            </div>
+                            <p className={`text-[10px] font-medium leading-tight mt-1 ${isLocked ? 'text-gray-300' : 'text-gray-500'}`}>
+                              {lesson.description}
+                            </p>
+                          </div>
                       </div>
 
                       {/* Lesson Popup */}
@@ -256,7 +326,7 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
                               <h3 className="text-white font-display font-black text-xl mb-1 leading-tight">
                                 {lesson.isChest ? 'Bonus Treasure!' : lesson.isChallenge ? 'Module Challenge!' : lesson.isBonus ? 'Bonus Lesson!' : lesson.title}
                               </h3>
-                              <p className="text-white/80 font-display font-bold text-sm mb-6">
+                              <p className="text-white/80 font-display font-bold text-xs mb-4">
                                 {lesson.isChest 
                                   ? 'Open for a quick bonus round!' 
                                   : lesson.isChallenge
@@ -265,16 +335,66 @@ export default function LearningPath({ modules, onLessonSelect, completedLessons
                                       ? 'Explore creative AI concepts!'
                                       : `Lesson ${lIdx + 1} of ${module.lessons.length}`}
                               </p>
+
+                              {/* Difficulty & XP Labels */}
+                              <div className="flex gap-2 mb-6">
+                                <div className="bg-white/20 px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm border border-white/10">
+                                  <Award size={12} className="text-white" />
+                                  <span className="text-white font-display font-black text-[10px] uppercase tracking-wider">{lesson.difficulty}</span>
+                                </div>
+                                <div className="bg-white/20 px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm border border-white/10">
+                                  <Star size={12} className="text-white fill-white" />
+                                  <span className="text-white font-display font-black text-[10px] uppercase tracking-wider">
+                                    +{lesson.xpReward} XP
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleBookmark(lesson.id);
+                                  }}
+                                  className={`px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm border transition-all ${
+                                    bookmarkedLessons.includes(lesson.id)
+                                      ? 'bg-pink-500 text-white border-pink-400'
+                                      : 'bg-white/20 text-white/70 border-white/10 hover:bg-white/30'
+                                  }`}
+                                >
+                                  <Bookmark size={12} className={bookmarkedLessons.includes(lesson.id) ? 'fill-current' : ''} />
+                                  <span className="font-display font-black text-[10px] uppercase tracking-wider">
+                                    {bookmarkedLessons.includes(lesson.id) ? 'Saved' : 'Save'}
+                                  </span>
+                                </button>
+                              </div>
                               
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                animate={{ 
+                                  boxShadow: ["0px 4px 0px #E2E8F0", "0px 8px 16px rgba(255,255,255,0.5)", "0px 4px 0px #E2E8F0"],
+                                  scale: [1, 1.02, 1]
+                                }}
+                                transition={{ 
+                                  boxShadow: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
+                                  scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+                                }}
                                 onClick={() => {
                                   onLessonSelect(lesson.id);
                                   setActiveLesson(null);
                                 }}
-                                className="w-full bg-white text-aibo-blue-500 py-3 rounded-2xl font-display font-black text-lg uppercase tracking-wider shadow-[0_4px_0_#E2E8F0] hover:translate-y-0.5 hover:shadow-[0_2px_0_#E2E8F0] active:translate-y-1 active:shadow-none transition-all"
+                                className="w-full bg-white text-aibo-blue-500 py-4 rounded-2xl font-display font-black text-xl uppercase tracking-wider shadow-[0_4px_0_#E2E8F0] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
                               >
-                                {lesson.isChest ? 'Open Chest +50 XP' : lesson.isChallenge ? 'Start Challenge +60 XP' : lesson.isBonus ? 'Start Bonus +40 XP' : 'Start +20 XP'}
-                              </button>
+                                <span className="relative z-10">{lesson.isChest ? 'Open' : 'Start'}</span>
+                                <motion.div
+                                  animate={{ x: [0, 5, 0] }}
+                                  transition={{ repeat: Infinity, duration: 1.5 }}
+                                  className="relative z-10"
+                                >
+                                  <Star size={20} className="fill-aibo-blue-500 text-aibo-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </motion.div>
+                                <motion.div 
+                                  className="absolute inset-0 bg-gradient-to-r from-aibo-blue-50 to-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                />
+                              </motion.button>
                             </div>
                             {/* Arrow */}
                             <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-aibo-blue-500 rotate-45" />
