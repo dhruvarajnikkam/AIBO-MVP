@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Nunito", sans-serif;
+
+  --color-aibo-blue-50: #e3f2fd;
+  --color-aibo-blue-100: #bbdefb;
+  --color-aibo-blue-200: #90caf9;
+  --color-aibo-blue-300: #64b5f6;
+  --color-aibo-blue-400: #42a5f5;
+  --color-aibo-blue-500: #2196f3;
+  --color-aibo-blue-600: #1e88e5;
+
+  --color-aibo-red-400: #ef5350;
+  --color-aibo-red-500: #f44336;
+  --color-aibo-red-600: #e53935;
+  --color-aibo-red-700: #d32f2f;
+
+  --color-duo-green: #58CC02;
+  --color-duo-green-dark: #58A700;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-slate-50 text-slate-800 antialiased overflow-hidden select-none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-black leading-tight;
+  }
+}
+
+@layer components {
+  .btn-3d {
+    @apply relative inline-flex items-center justify-center font-display font-black uppercase tracking-wider transition-all duration-100 rounded-[1.25rem] active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-3d-blue {
+    @apply bg-aibo-blue-500 hover:bg-aibo-blue-400 text-white shadow-[0_4px_0_#1e88e5];
+  }
+
+  .btn-3d-green {
+    @apply bg-duo-green hover:bg-duo-green-dark text-white shadow-[0_4px_0_#58A700];
+  }
+
+  .btn-3d-red {
+    @apply bg-aibo-red-500 hover:bg-aibo-red-400 text-white shadow-[0_4px_0_#d32f2f];
+  }
+
+  .btn-3d-white {
+    @apply bg-white text-slate-500 border-2 border-slate-200 hover:bg-slate-50 shadow-[0_4px_0_#e2e8f0];
+  }
+
+  .card-3d {
+    @apply bg-white border-2 border-slate-200 rounded-[2rem] p-6 transition-all duration-100 active:translate-y-1 active:shadow-none cursor-pointer shadow-[0_4px_0_#e2e8f0];
+  }
+
+  .card-3d-selected {
+    @apply border-aibo-blue-400 bg-aibo-blue-50/50 shadow-[0_4px_0_#3b82f6] text-aibo-blue-600;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Duolingo-style ripple/tap effect can be simulated with active states */
+}
+
+/* Page animations */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}

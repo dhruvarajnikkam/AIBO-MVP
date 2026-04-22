@@ -69,12 +69,7 @@ export default function LearningPath({
   return (
     <div className="flex flex-col items-center gap-6 pb-20 overflow-y-auto scrollbar-hide h-full relative">
       {/* Sticky Header with Filter */}
-      <div className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-4 flex flex-col gap-3 relative">
-        {/* Ai Bot Mascot (subtle background companion) */}
-        <div className="absolute right-2 -bottom-2 w-12 h-12 opacity-80 pointer-events-none translate-y-full hover:scale-110 transition-transform">
-          <img src="/AiBot.png" alt="Aibo" className="w-full h-full object-contain" />
-        </div>
-
+      <div className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-4 flex flex-col gap-3">
         {/* Practice Card (Compact when scrolled?) */}
         {charging < 50 && (
           <motion.div 
@@ -164,9 +159,9 @@ export default function LearningPath({
           const isModuleLocked = globalIdx > 0 && !completedLessons.includes(allLessons[globalIdx - 1].id);
 
           return (
-            <div key={module.id} className={`w-full max-w-md px-4 transition-all duration-500 ${isModuleLocked ? 'opacity-70 grayscale pointer-events-none' : 'opacity-100'}`}>
+            <div key={module.id} className={`w-full max-w-md px-4 transition-all duration-500 ${isModuleLocked ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
               {/* Module Header */}
-              <div className={`${isModuleLocked ? 'bg-slate-300 border-slate-400 border-b-[6px] shadow-sm' : 'bg-aibo-blue-500 border-aibo-blue-700 shadow-xl border-b-[6px]'} text-white p-6 rounded-[2rem] mb-14 relative overflow-hidden transition-all duration-500`}>
+              <div className={`${isModuleLocked ? 'bg-slate-300 border-slate-400' : 'bg-aibo-blue-500 border-aibo-blue-700'} text-white p-6 rounded-[2rem] mb-12 shadow-lg relative overflow-hidden transition-all duration-500 border-b-4`}>
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className={`text-xs font-display font-black uppercase tracking-[0.2em] ${isModuleLocked ? 'text-slate-500' : 'text-white/80'}`}>
@@ -264,7 +259,7 @@ export default function LearningPath({
                           ) : isCompleted ? (
                             <Check className="w-10 h-10 text-white stroke-[4px]" />
                           ) : isLocked ? (
-                            <Lock className="w-8 h-8 text-slate-500" />
+                            <Lock className="w-8 h-8 text-gray-400" />
                           ) : lesson.isChallenge ? (
                             <Trophy className="w-10 h-10 text-yellow-600" />
                           ) : lesson.isBonus ? (
@@ -275,9 +270,9 @@ export default function LearningPath({
 
                           {/* Current Lesson Indicator */}
                           {isCurrent && !isLocked && !isActive && (
-                            <div className="absolute -top-[52px] left-1/2 -translate-x-1/2 bg-white border-2 border-gray-200 px-5 py-2 rounded-2xl shadow-xl whitespace-nowrap animate-bounce z-10">
-                              <span className="font-display font-black text-aibo-blue-500 uppercase text-sm tracking-wide">Start!</span>
-                              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r-2 border-b-2 border-gray-200 rotate-45" />
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white border-2 border-gray-200 px-4 py-2 rounded-xl shadow-md whitespace-nowrap animate-bounce">
+                              <span className="font-display font-black text-aibo-blue-500 uppercase text-xs">Start</span>
+                              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r-2 border-b-2 border-gray-200 rotate-45" />
                             </div>
                           )}
 
@@ -290,7 +285,7 @@ export default function LearningPath({
                         </motion.button>
 
                           <div className={`flex flex-col ${lIdx % 2 === 0 ? 'text-left' : 'text-right'} max-w-[180px]`}>
-                            <h4 className={`font-display font-black text-sm uppercase tracking-tight ${isLocked ? 'text-slate-500' : 'text-gray-800'}`}>
+                            <h4 className={`font-display font-black text-sm uppercase tracking-tight ${isLocked ? 'text-gray-400' : 'text-gray-700'}`}>
                               {lesson.title}
                             </h4>
                             <div className={`flex items-center gap-1 mt-1 ${lIdx % 2 === 0 ? 'justify-start' : 'justify-end'}`}>

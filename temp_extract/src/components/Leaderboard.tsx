@@ -74,13 +74,9 @@ export default function Leaderboard({ currentUserXp }: LeaderboardProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide relative pb-24">
-        {/* Mascot Student for Leaderboard */}
-        <div className="absolute right-4 top-4 w-32 h-32 opacity-[0.15] z-0 pointer-events-none mix-blend-screen mix-blend-plus-lighter">
-          <img src="/Student.png" alt="Student Mascot" className="w-full h-full object-contain" />
-        </div>
-
-        <div className="divide-y divide-gray-800/50 relative z-10">
+      {/* Leaderboard List */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <div className="divide-y divide-gray-800/50">
           {leaderboardData.map((entry, idx) => {
             const isTop3 = entry.rank <= 3;
             const BadgeIcon = entry.avatarBadge;

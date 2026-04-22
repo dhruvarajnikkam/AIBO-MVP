@@ -31,20 +31,14 @@ interface LessonSessionProps {
   onClose: () => void;
   onComplete: (xpEarned: number, accuracy: number, finalStreak: number) => void;
   onStreakRestore?: (amount: number, streak: number) => void;
-
-  userId?: string;  onWrongAnswer?: (amount: number) => void;
+  onWrongAnswer?: (amount: number) => void;
 }
 
-export default function LessonSession({ lesson, performance, onClose, onComplete, onStreakRestore, onWrongAnswer, userId }: LessonSessionProps) {
-  const [adaptiveChallenges, setAdaptiveChallenges] = useState<Challenge[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    generateAdaptiveSession(lesson, performance, userId).then(challenges => {
-      setAdaptiveChallenges(challenges);
-      setIsLoading(false);
-    });
-  }, [lesson, performance, userId]);
+export default function LessonSession({ lesson, performance, onClose, onComplete, onStreakRestore, onWrongAnswer }: LessonSessionProps) {
+  // Generate challenges once when the session starts to prevent re-shuffling on every render
+  const [adaptiveChallenges] = useState(() => 
+    generateAdaptiveSession(lesson, performance)
+  );
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<any>(null);
@@ -56,8 +50,6 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
   const [sessionStreak, setSessionStreak] = useState(0);
   const [maxSessionStreak, setMaxSessionStreak] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
-
-// MOVED LOADING CHECK
 
   const currentChallenge = adaptiveChallenges[currentIndex];
 
@@ -178,9 +170,6 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
     }
   }, [isChecked, currentIndex, adaptiveChallenges.length, correctCount, onComplete, xpEarned, maxSessionStreak]);
 
-  if (isLoading || adaptiveChallenges.length === 0) {
-    return <div className="h-full bg-white flex items-center justify-center font-display font-bold text-gray-400">Loading lesson...</div>;
-  }
   const renderExercise = () => {
     switch (currentChallenge.type) {
       case 'spot_the_ai':
@@ -332,14 +321,9 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="absolute inset-0 z-[500] bg-white flex flex-col p-6 overflow-y-auto scrollbar-hide relative"
+            className="absolute inset-0 z-[500] bg-white flex flex-col p-6 overflow-y-auto scrollbar-hide"
           >
-            {/* Mascot M3 for completion/success feedback */}
-            <div className="absolute right-4 top-4 w-24 h-24 sm:w-32 sm:h-32 opacity-90 grayscale-[20%] z-0">
-               <img src="/M3.jpeg" alt="Completion Mascot" className="w-full h-full object-contain mix-blend-multiply" />
-            </div>
-
-            <div className="max-w-2xl mx-auto w-full flex flex-col h-full relative z-10">
+            <div className="max-w-2xl mx-auto w-full flex flex-col h-full">
               <div className="flex-1 space-y-8 pt-12">
                 <div className="flex items-center gap-4">
                   <div className={`w-16 h-16 rounded-3xl flex items-center justify-center ${isCorrect ? 'bg-duo-green text-white' : 'bg-aibo-red-500 text-white'}`}>
@@ -432,11 +416,6 @@ export default function LessonSession({ lesson, performance, onClose, onComplete
             {renderExercise()}
           </motion.div>
         </AnimatePresence>
-
-        {/* Mascot M2 while solving questions */}
-        <div className="fixed bottom-32 right-4 w-24 h-24 opacity-[0.15] mix-blend-multiply pointer-events-none z-0 transition-opacity">
-          <img src="/M2.jpeg" alt="Thinking Mascot" className="w-full h-full object-contain" />
-        </div>
       </div>
 
       {/* Footer / Feedback */}

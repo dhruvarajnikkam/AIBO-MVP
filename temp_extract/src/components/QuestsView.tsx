@@ -140,14 +140,9 @@ export default function QuestsView({
         </div>
       </motion.div>
 
-      <div className="text-left space-y-1 relative">
+      <div className="text-left space-y-1">
         <h3 className="text-xl font-display font-black text-gray-700">Missions</h3>
         <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Real-time Progress</p>
-        
-        {/* Mascot M4 for Quests */}
-        <div className="absolute right-0 bottom-0 w-16 h-16 opacity-80 z-0">
-          <img src="/M4.jpeg" alt="Quest Mascot" className="w-full h-full object-contain mix-blend-multiply" />
-        </div>
       </div>
 
       <div className="space-y-4">

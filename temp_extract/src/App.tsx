@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Star, Award, Home, BarChart2, User as UserIcon, CheckCircle2, Target } from 'lucide-react';
-import { LogIn } from 'lucide-react';
-import { isSupabaseConfigured, supabase } from './lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import { Trophy, Star, Award, Home, BarChart2, User, CheckCircle2, Target } from 'lucide-react';
 import Header from './components/Header';
 import LearningPath from './components/LearningPath';
 import LessonSession from './components/LessonSession';
@@ -12,8 +9,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ChestIcon from './components/ui/ChestIcon';
 import QuestsView from './components/QuestsView';
 import { AI_CURRICULUM, Lesson, PRACTICE_LESSON } from './lib/content';
-import { MATH_CURRICULUM } from './lib/mathContent';
-import { SCIENCE_CURRICULUM } from './lib/scienceContent';
 import { UserPerformance } from './lib/sessionGenerator';
 import { soundManager } from './lib/sounds';
 
@@ -41,10 +36,7 @@ const BADGES: Badge[] = [
 ];
 
 export default function App() {
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState<'home' | 'leaderboard' | 'quests' | 'profile'>('home');
-  const [activeCurriculumId, setActiveCurriculumId] = useState<'ai' | 'math' | 'science'>('ai');
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(0);
   const [charging, setCharging] = useState(100);
@@ -59,58 +51,6 @@ export default function App() {
   const [bestAnswerStreak, setBestAnswerStreak] = useState(0);
   const [dailyChestClaimed, setDailyChestClaimed] = useState(false);
   const [chargingAnimation, setChargingAnimation] = useState<{ text: string; id: number } | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setAuthUser(data.session?.user ?? null);
-      setAuthLoading(false);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null);
-      setAuthLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleGoogleSignIn = async () => {
-    soundManager.play('click');
-
-    if (!isSupabaseConfigured) {
-      alert('Authentication is currently offline. Please try playing as a guest!');
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-
-    if (error) {
-      console.error('Google sign-in failed', error);
-      alert('Unable to connect to login services at this moment. Please try again later.');
-    }
-  };
-
-  const handleGuestSignIn = () => {
-    soundManager.play('click');
-    setAuthUser({
-      id: 'guest-user',
-      app_metadata: {},
-      user_metadata: { name: 'Guest Explorer' },
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-    } as unknown as User);
-  };
 
   // Charging Regeneration Logic
   useEffect(() => {
@@ -152,17 +92,7 @@ export default function App() {
     soundManager.play('click');
   };
 
-  const currentCurriculum = useMemo(() => {
-    if (activeCurriculumId === 'math') return MATH_CURRICULUM;
-    if (activeCurriculumId === 'science') return SCIENCE_CURRICULUM;
-    return AI_CURRICULUM;
-  }, [activeCurriculumId]);
-
   const handleLessonSelect = (lessonId: string) => {
-    if (!authUser) {
-      alert('Please sign in first.');
-      return;
-    }
     soundManager.play('click');
     if (lessonId === 'practice') {
       setActiveLesson(PRACTICE_LESSON);
@@ -174,7 +104,7 @@ export default function App() {
       return;
     }
 
-    for (const module of currentCurriculum) {
+    for (const module of AI_CURRICULUM) {
       const lesson = module.lessons.find(l => l.id === lessonId);
       if (lesson) {
         setCharging(prev => Math.max(0, prev - LESSON_COST));
@@ -245,33 +175,14 @@ export default function App() {
             exit={{ opacity: 0, x: -20 }}
             className="flex flex-col h-full"
           >
-            {/* Curriculum Tabs */}
-            <div className="px-4 py-4 bg-white/80 backdrop-blur-md z-[100] border-b border-gray-100 flex justify-center sticky top-0 shadow-sm">
-              <div className="flex gap-2 p-1.5 bg-gray-100 rounded-[1.25rem] overflow-x-auto scrollbar-hide shrink-0 ring-1 ring-gray-900/5">
-                {(['ai', 'math', 'science'] as const).map((curr) => (
-                  <button
-                    key={curr}
-                    onClick={() => setActiveCurriculumId(curr)}
-                    className={`px-5 py-2.5 rounded-xl font-display font-extrabold uppercase tracking-wide text-[11px] transition-all duration-300 whitespace-nowrap ${
-                      activeCurriculumId === curr 
-                        ? 'bg-white text-aibo-blue-500 shadow-md transform scale-105' 
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
-                    }`}
-                  >
-                    {curr === 'ai' ? 'AI Magic' : curr === 'math' ? 'Math Quest' : 'Science Pro'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="flex-1 overflow-y-auto scrollbar-hide">
               <LearningPath 
-                modules={currentCurriculum} 
+                modules={AI_CURRICULUM} 
                 onLessonSelect={handleLessonSelect}
                 completedLessons={completedLessons}
                 bookmarkedLessons={bookmarkedLessons}
                 onToggleBookmark={handleToggleBookmark}
-                currentLessonId={currentCurriculum[0].lessons.find(l => !completedLessons.includes(l.id))?.id}
+                currentLessonId={AI_CURRICULUM[0].lessons.find(l => !completedLessons.includes(l.id))?.id}
                 charging={charging}
               />
             </div>
@@ -316,7 +227,7 @@ export default function App() {
           >
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="w-24 h-24 bg-aibo-blue-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                <UserIcon className="w-12 h-12 text-aibo-blue-500" />
+                <User className="w-12 h-12 text-aibo-blue-500" />
               </div>
               <div>
                 <h2 className="text-2xl font-display font-black text-gray-700">AI Explorer</h2>
@@ -360,44 +271,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="relative w-full max-w-[430px] h-[100dvh] bg-white overflow-hidden flex flex-col mx-auto shadow-sm">
-        {!authUser && !authLoading && (
-          <div className="absolute inset-0 z-[700] bg-gradient-to-br from-aibo-blue-50 via-white to-aibo-red-50 flex items-center justify-center p-6">
-            <div className="w-full max-w-sm rounded-3xl bg-white/95 backdrop-blur border border-white shadow-2xl p-8 text-center space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-blue-50 to-transparent"></div>
-              <div className="space-y-4 relative z-10">
-                <motion.div 
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ type: "spring", bounce: 0.5 }}
-                  className="w-32 h-32 mx-auto rounded-full mb-4 shadow-xl overflow-hidden border-4 border-white bg-white"
-                >
-                  <img src="/M1.jpeg" alt="Welcome Mascot" className="w-full h-full object-cover" />
-                </motion.div>
-                <div>
-                  <h1 className="text-3xl font-display font-black text-gray-700">Sign in to continue</h1>
-                  <p className="text-sm text-gray-500 font-medium">Use Google to save your progress directly and compete with friends.</p>
-                </div>
-              </div>
-
-              <button
-                onClick={handleGoogleSignIn}
-                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-black text-white px-5 py-4 font-black shadow-lg active:scale-[0.99] transition-transform"
-              >
-                <LogIn className="w-5 h-5" />
-                Sign in with Google
-              </button>
-
-              <button
-                onClick={handleGuestSignIn}
-                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-gray-100 text-gray-700 px-5 py-4 font-black shadow-md mt-4 active:scale-[0.99] transition-transform"
-              >
-                <UserIcon className="w-5 h-5" />
-                Play as Guest
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="relative w-full max-w-[430px] h-[844px] bg-white overflow-hidden flex flex-col mx-auto shadow-sm">
         <Header xp={xp} streak={streak} charging={charging} nextChargingIn={nextChargingIn} />
 
         <main className="flex-1 overflow-hidden relative">
@@ -419,7 +293,6 @@ export default function App() {
               <LessonSession 
                 lesson={activeLesson}
                 performance={userPerformance}
-                userId={authUser?.id}
                 onClose={() => setActiveLesson(null)}
                 onComplete={handleLessonComplete}
                 onStreakRestore={handleRestoreCharging}
@@ -459,14 +332,9 @@ export default function App() {
               <motion.div 
                 initial={{ scale: 0.8, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-white rounded-3xl p-8 max-w-[320px] w-full text-center space-y-6 shadow-2xl relative overflow-hidden"
+                className="bg-white rounded-3xl p-8 max-w-[320px] w-full text-center space-y-6 shadow-2xl"
               >
-                {/* Mascot M3 for Completion/Celebration */}
-                <div className="absolute top-0 right-0 w-24 h-24 opacity-20 pointer-events-none transition-transform scale-110 translate-x-2 -translate-y-2 mix-blend-multiply">
-                  <img src="/M3.jpeg" alt="Great Job!" className="w-full h-full object-contain" />
-                </div>
-
-                <div className="space-y-2 relative z-10">
+                <div className="space-y-2">
                   <h2 className="text-2xl font-display font-black text-aibo-blue-500 leading-tight">Lesson Complete!</h2>
                   <p className="text-sm text-gray-500 font-medium">You're becoming an AI expert!</p>
                 </div>
@@ -551,7 +419,7 @@ export default function App() {
             className={`flex flex-col items-center gap-1 transition-colors ${view === 'profile' ? 'text-aibo-blue-500' : 'text-gray-400'}`}
           >
             <div className={`w-12 h-10 rounded-xl flex items-center justify-center transition-colors ${view === 'profile' ? 'bg-aibo-blue-50' : ''}`}>
-              <UserIcon className="w-6 h-6" />
+              <User className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-tighter">Profile</span>
           </button>
