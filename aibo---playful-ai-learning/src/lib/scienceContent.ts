@@ -42,10 +42,26 @@ export const SCIENCE_CURRICULUM: Module[] = [
           {
             id: 's1-q2',
             type: 'fill_in_blank',
+            question: 'Sky gazing',
             sentence: 'When the moon is completely dark, it is called a ___ moon.',
             options: ['new', 'full', 'crescent'],
             correctAnswer: 'new',
             explanation: 'A new moon occurs when the moon is between Earth and the sun.',
+            xpValue: 150
+          },
+          {
+            id: 's1-q3',
+            type: 'scenario_quest',
+            question: 'Moonlight Physics',
+            scenario: 'Does the moon produce its own light?',
+            studentRole: 'Astronomer',
+            decisionPrompt: 'Choose the correct fact:',
+            scenarioOptions: [
+              { id: 'opt1', text: 'No, it reflects the Sun\'s light.', consequence: 'Correct! The moon is like a giant mirror reflecting the sun.', is_best: true, explanation: 'The moon does not emit its own visible light. We see it because sunlight bounces off its surface.' },
+              { id: 'opt2', text: 'Yes, it glows from internal heat.', consequence: 'Incorrect. The moon is a cold, rocky body.', is_best: false, explanation: 'Unlike stars, moons and planets do not generate their own light.' },
+              { id: 'opt3', text: 'Yes, but only during a Full Moon.', consequence: 'Incorrect. Even a Full Moon is just reflection.', is_best: false, explanation: 'A Full Moon just means the fully illuminated side is facing Earth.' }
+            ],
+            explanation: 'The moon acts as a reflector in space, bouncing sunlight down to Earth.',
             xpValue: 150
           }
         ]

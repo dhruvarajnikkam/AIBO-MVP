@@ -42,10 +42,26 @@ export const MATH_CURRICULUM: Module[] = [
           {
             id: 'm1-q2',
             type: 'fill_in_blank',
+            question: 'Solve the fraction!',
             sentence: 'A fraction represents a ___ of a whole.',
             options: ['part', 'piece', 'portion'],
             correctAnswer: 'part',
             explanation: 'Fractions are used to represent smaller pieces of a whole item.',
+            xpValue: 150
+          },
+          {
+            id: 'm1-q3',
+            type: 'scenario_quest',
+            question: 'Pizza Math!',
+            scenario: 'You have a pizza cut into 8 equal slices. If you eat 3 slices, what fraction of the pizza is left?',
+            studentRole: 'Hungry Mathematician',
+            decisionPrompt: 'Select your answer:',
+            scenarioOptions: [
+              { id: 'opt1', text: '5/8', consequence: 'Exactly! 8 - 3 = 5 slices left.', is_best: true, explanation: 'The whole pizza is 8/8. Eating 3/8 leaves 5/8.' },
+              { id: 'opt2', text: '3/8', consequence: 'That is the fraction you ate, not what is left!', is_best: false, explanation: 'Always read the question carefully to see what it asks for.' },
+              { id: 'opt3', text: '1/2', consequence: '1/2 would mean 4 slices are left.', is_best: false, explanation: '1/2 is equivalent to 4/8.' }
+            ],
+            explanation: 'Subtracting fractions with the same denominator is as simple as subtracting the numerators!',
             xpValue: 150
           }
         ]
