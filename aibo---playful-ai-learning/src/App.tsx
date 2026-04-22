@@ -11,6 +11,7 @@ import Leaderboard from './components/Leaderboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ChestIcon from './components/ui/ChestIcon';
 import QuestsView from './components/QuestsView';
+import Onboarding from './components/Onboarding';
 import { AI_CURRICULUM, Lesson, PRACTICE_LESSON } from './lib/content';
 import { MATH_CURRICULUM } from './lib/mathContent';
 import { SCIENCE_CURRICULUM } from './lib/scienceContent';
@@ -43,6 +44,8 @@ const BADGES: Badge[] = [
 export default function App() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(() => localStorage.getItem('onboarding_complete') === 'true');
+  const [onboardingData, setOnboardingData] = useState(() => JSON.parse(localStorage.getItem('onboarding_data') || '{}'));
   const [view, setView] = useState<'home' | 'leaderboard' | 'quests' | 'profile'>('home');
   const [activeCurriculumId, setActiveCurriculumId] = useState<'ai' | 'math' | 'science'>('ai');
   const [xp, setXp] = useState(0);
@@ -319,8 +322,9 @@ export default function App() {
                 <UserIcon className="w-12 h-12 text-aibo-blue-500" />
               </div>
               <div>
-                <h2 className="text-2xl font-display font-black text-gray-700">AI Explorer</h2>
+                <h2 className="text-2xl font-display font-black text-gray-700">{onboardingData.name || 'AI Explorer'}</h2>
                 <p className="text-gray-400 font-medium">Joined April 2026</p>
+                {onboardingData.grade && <p className="text-sm font-bold text-aibo-blue-500 mt-1">{onboardingData.grade} Grade • Loves {onboardingData.subject || 'Learning'}</p>}
               </div>
             </div>
 
@@ -398,6 +402,18 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {authUser && !isOnboardingComplete && (
+          <Onboarding 
+            onComplete={(data) => {
+              setIsOnboardingComplete(true);
+              setOnboardingData(data);
+              localStorage.setItem('onboarding_complete', 'true');
+              localStorage.setItem('onboarding_data', JSON.stringify(data));
+            }}
+          />
+        )}
+
         <Header xp={xp} streak={streak} charging={charging} nextChargingIn={nextChargingIn} />
 
         <main className="flex-1 overflow-hidden relative">
